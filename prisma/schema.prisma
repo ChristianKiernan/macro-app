@@ -7,3 +7,108 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum ServingUnit {
+  TEASPOON
+  TABLESPOON
+  MILLIILITER
+  CUP
+  OUNCE
+  POUND
+  GRAM
+  UNIT
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ingredients Ingredient[]
+  recipes     Recipe[]
+  allergens   Allergen[]
+}
+
+model Ingredient {
+  id          String             @id @default(cuid())
+  name        String
+  brand       String?
+  calories    Float
+  fat         Float
+  protein     Float
+  carbs       Float
+  sugar       Float
+  servingSize Float
+  servingUnit ServingUnit
+  userId      String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  user        User             @relation(fields: [userId], references: [id])
+  recipeItems RecipeIngredient[]
+  allergens   IngredientAllergen[]
+}
+
+model Recipe {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  servings    Int                @default(1)
+  userId      String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  user        User               @relation(fields: [userId], references: [id])
+  ingredients RecipeIngredient[]
+  allergens   RecipeAllergen[]
+}
+
+model RecipeIngredient {
+  id           String     @id @default(cuid())
+  recipeId     String
+  ingredientId String
+  quantity     Float
+  unit         String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, ingredientId])
+  @@index([ingredientId])
+}
+
+model Allergen {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  ingredients IngredientAllergen[]
+  recipes     RecipeAllergen[]
+
+  @@unique([userId, name])
+  @@index([name])
+}
+
+model IngredientAllergen {
+  ingredientId String
+  allergenId   String
+
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  allergen     Allergen   @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([ingredientId, allergenId])
+  @@index([allergenId])
+}
+
+model RecipeAllergen {
+  recipeId   String
+  allergenId String
+
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, allergenId])
+  @@index([allergenId])
+}
