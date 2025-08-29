@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Calendar,
-  Home,
-  Search,
-  Settings,
-  LogOut,
-  ChefHat,
-  type LucideIcon,
-} from "lucide-react";
+import { Calendar, Home, LogOut, ChefHat, type LucideIcon } from "lucide-react";
 import { Session } from "next-auth";
 import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,11 +27,6 @@ interface MenuItem {
 // Menu items with proper typing
 const items: MenuItem[] = [
   {
-    title: "Home",
-    url: "/home",
-    icon: Home,
-  },
-  {
     title: "Ingredients",
     url: "/ingredients",
     icon: ChefHat,
@@ -50,14 +37,9 @@ const items: MenuItem[] = [
     icon: Calendar,
   },
   {
-    title: "Search",
-    url: "/search",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
   },
   {
     title: "Sign Out",

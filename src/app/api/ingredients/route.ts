@@ -59,8 +59,6 @@ export async function POST(request: NextRequest) {
       ingredientData.servingSize = parseFloat(ingredientData.servingSize);
     }
 
-    console.log("Creating ingredient with data:", ingredientData);
-
     // Create the ingredient first
     const newIngredient = await prisma.ingredient.create({
       data: {
