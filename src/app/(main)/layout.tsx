@@ -11,7 +11,7 @@ export default async function MainLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <SidebarProvider>
         <AppSidebar session={session} />
         <SidebarInset>{children}</SidebarInset>

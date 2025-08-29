@@ -67,6 +67,21 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    redirect: async ({ url, baseUrl }) => {
+      // Redirect to ingredients page after successful sign in
+      if (url === baseUrl || url === `${baseUrl}/home`) {
+        return `${baseUrl}/ingredients`;
+      }
+      // Allow relative callback URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Allow callback URLs on the same origin
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return `${baseUrl}/ingredients`;
+    },
     session: async ({ session, token }) => {
       if (session?.user && token?.sub) {
         session.user.id = token.sub;
@@ -85,5 +100,6 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/login",
+    signOut: "/signout",
   },
 };

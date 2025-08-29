@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { z } from "zod"
+import { z } from "zod";
 import {
   Card,
   CardContent,
@@ -21,10 +21,7 @@ import {
 
 // Validation schema
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Invalid email address"),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
   password: z
     .string()
     .min(1, "Password is required")
@@ -69,7 +66,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         setError("Invalid email or password");
       } else {
         onSuccess?.();
-        router.push("/home");
+        router.push("/ingredients");
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -81,7 +78,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const handleGoogleSignIn = async () => {
     setError("");
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl: "/ingredients" });
     } catch {
       setError("Failed to sign in with Google");
     }
@@ -104,7 +101,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
               {error}
             </div>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -138,7 +135,9 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
               className={errors.password ? "border-destructive" : ""}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
