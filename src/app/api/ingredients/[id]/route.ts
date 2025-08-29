@@ -3,11 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function GET(
-  req: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get authenticated user
+    const { id } = await params;
     const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,8 +15,15 @@ export async function GET(
 
     const ingredient = await prisma.ingredient.findFirst({
       where: {
-        id: params.id,
-        userId: user.id, 
+        id,
+        userId: user.id,
+      },
+      include: {
+        allergens: {
+          include: {
+            allergen: true,
+          },
+        },
       },
     });
 
@@ -27,12 +34,17 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(ingredient);
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "An unknown error occurred";
+    // Transform the data to match the frontend interface
+    const transformedIngredient = {
+      ...ingredient,
+      allergens: ingredient.allergens.map((ia) => ia.allergen.name),
+    };
+
+    return NextResponse.json(transformedIngredient);
+  } catch (error) {
+    console.error("Error fetching ingredient:", error);
     return NextResponse.json(
-      { error: "Failed to fetch ingredient: " + message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -43,6 +55,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     // Get authenticated user
     const user = await getAuthenticatedUser();
     if (!user) {
@@ -50,14 +63,19 @@ export async function PUT(
     }
 
     const requestData = await req.json();
-    // Remove userId from request data (if present) and use authenticated user's ID
+    // Remove userId and allergens from request data (handle separately)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { userId, ...updateData } = requestData;
+    const { userId, allergens = [], ...updateData } = requestData;
+
+    // Ensure servingSize is a number if it exists
+    if (typeof updateData.servingSize === "string") {
+      updateData.servingSize = parseFloat(updateData.servingSize);
+    }
 
     // Check if ingredient exists and belongs to user
     const existingIngredient = await prisma.ingredient.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -69,13 +87,66 @@ export async function PUT(
       );
     }
 
-    // Update the ingredient
-    const updatedIngredient = await prisma.ingredient.update({
-      where: { id: params.id },
+    // Update the ingredient basic data
+    await prisma.ingredient.update({
+      where: { id },
       data: updateData,
     });
 
-    return NextResponse.json(updatedIngredient);
+    // Handle allergen updates
+    // First, remove all existing allergen relationships
+    await prisma.ingredientAllergen.deleteMany({
+      where: { ingredientId: id },
+    });
+
+    // Then create new allergen relationships
+    if (allergens.length > 0) {
+      for (const allergenName of allergens) {
+        // Find or create the allergen
+        const allergen = await prisma.allergen.upsert({
+          where: {
+            userId_name: {
+              userId: user.id,
+              name: allergenName.trim(),
+            },
+          },
+          update: {}, // No update needed if exists
+          create: {
+            userId: user.id,
+            name: allergenName.trim(),
+          },
+        });
+
+        // Create the ingredient-allergen relationship
+        await prisma.ingredientAllergen.create({
+          data: {
+            ingredientId: id,
+            allergenId: allergen.id,
+          },
+        });
+      }
+    }
+
+    // Fetch the complete updated ingredient with allergens
+    const completeIngredient = await prisma.ingredient.findUnique({
+      where: { id },
+      include: {
+        allergens: {
+          include: {
+            allergen: true,
+          },
+        },
+      },
+    });
+
+    // Transform to match our interface format
+    const transformedIngredient = {
+      ...completeIngredient,
+      allergens:
+        completeIngredient?.allergens.map((ia) => ia.allergen.name) || [],
+    };
+
+    return NextResponse.json(transformedIngredient);
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "An unknown error occurred";
@@ -91,6 +162,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     // Get authenticated user
     const user = await getAuthenticatedUser();
     if (!user) {
@@ -100,7 +172,7 @@ export async function DELETE(
     //  Check if ingredient exists and belongs to user
     const existingIngredient = await prisma.ingredient.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -114,7 +186,7 @@ export async function DELETE(
 
     // Delete ingredient from the database
     await prisma.ingredient.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Ingredient deleted successfully" });
