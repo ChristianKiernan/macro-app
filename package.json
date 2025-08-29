@@ -13,6 +13,8 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "db:generate": "prisma generate",
+    "db:baseline": "npx prisma migrate resolve --applied \"20250828162121_init\" && npx prisma migrate resolve --applied \"20250828183755_add_password_field\"",
+    "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -139,7 +139,15 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🗃️ Run database migrations
+      - name: � Baseline existing migrations
+        run: |
+          # Mark existing migrations as applied to baseline the production database
+          npx prisma migrate resolve --applied "20250828162121_init" || echo "Migration already resolved"
+          npx prisma migrate resolve --applied "20250828183755_add_password_field" || echo "Migration already resolved"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: �🗃️ Run database migrations
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
