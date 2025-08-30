@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Grid3X3, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import IngredientCard from "@/app/(main)/ingredients/_components/ingredient-card";
 import { AddIngredientModal } from "@/app/(main)/ingredients/_components/add-ingredient";
 import { EditIngredientModal } from "@/app/(main)/ingredients/_components/edit-ingredient";
@@ -31,6 +40,10 @@ export default function IngredientsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(6); // Adjust this number as needed
+
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
     sortBy: "name",
@@ -50,26 +63,90 @@ export default function IngredientsPage() {
     caloriesMax: filters.caloriesMax ? Number(filters.caloriesMax) : undefined,
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredIngredients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedIngredients = filteredIngredients.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = useMemo(() => {
+    const pages: (number | string)[] = [];
+    const showEllipsis = totalPages > 7;
+
+    if (!showEllipsis) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination with ellipsis
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, "ellipsis", totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(
+          1,
+          "ellipsis",
+          totalPages - 4,
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages
+        );
+      } else {
+        pages.push(
+          1,
+          "ellipsis",
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          "ellipsis",
+          totalPages
+        );
+      }
+    }
+
+    return pages;
+  }, [currentPage, totalPages]);
+
   // Get available dietary restrictions from allergens
   const availableDietaryRestrictions =
     getDietaryRestrictionsFromAllergens(ingredients);
   const stats = getIngredientStats(filteredIngredients);
 
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of ingredients section
+    document.querySelector("[data-ingredients-section]")?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
   // Convert database ingredient to form format
   const convertToFormFormat = (ingredient: Ingredient): BaseIngredient => {
     return {
-      name: ingredient.name,
-      brand: ingredient.brand,
-      calories: ingredient.calories,
-      protein: ingredient.protein,
-      fat: ingredient.fat,
-      carbs: ingredient.carbs,
-      sugar: ingredient.sugar,
-      servingSize: ingredient.servingSize,
+      ...ingredient,
       servingUnit: ingredient.servingUnit
         ? PRISMA_TO_UI_MAPPING[ingredient.servingUnit]
         : null,
-      allergens: ingredient.allergens,
     };
   };
 
@@ -243,7 +320,7 @@ export default function IngredientsPage() {
           </div>
 
           {/* Right Content - Ingredients Grid */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3" data-ingredients-section>
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -253,8 +330,13 @@ export default function IngredientsPage() {
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {filteredIngredients.length === ingredients.length
-                        ? "Your complete ingredient library"
-                        : `Showing ${filteredIngredients.length} of ${ingredients.length} ingredients`}
+                        ? `Page ${currentPage} of ${totalPages} - Your complete ingredient library`
+                        : `Showing ${startIndex + 1}-${Math.min(
+                            endIndex,
+                            filteredIngredients.length
+                          )} of ${
+                            filteredIngredients.length
+                          } filtered ingredients`}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -339,22 +421,75 @@ export default function IngredientsPage() {
                   )}
 
                 {/* Ingredients Grid */}
-                {!loading && filteredIngredients.length > 0 && (
-                  <div
-                    className={`grid gap-4 ${
-                      isGridView ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
-                    }`}
-                  >
-                    {filteredIngredients.map((ingredient) => (
-                      <IngredientCard
-                        key={ingredient.id}
-                        cardData={ingredient}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        orientation={isGridView ? "vertical" : "horizontal"}
-                      />
-                    ))}
-                  </div>
+                {!loading && paginatedIngredients.length > 0 && (
+                  <>
+                    <div
+                      className={`grid gap-4 ${
+                        isGridView
+                          ? "grid-cols-1 md:grid-cols-2"
+                          : "grid-cols-1"
+                      }`}
+                    >
+                      {paginatedIngredients.map((ingredient) => (
+                        <IngredientCard
+                          key={ingredient.id}
+                          cardData={ingredient}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          orientation={isGridView ? "vertical" : "horizontal"}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="mt-8">
+                        <Pagination>
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious
+                                onClick={handlePreviousPage}
+                                className={
+                                  currentPage === 1
+                                    ? "pointer-events-none opacity-50"
+                                    : "cursor-pointer"
+                                }
+                              />
+                            </PaginationItem>
+
+                            {getPageNumbers.map((page, index) => (
+                              <PaginationItem key={index}>
+                                {page === "ellipsis" ? (
+                                  <PaginationEllipsis />
+                                ) : (
+                                  <PaginationLink
+                                    onClick={() =>
+                                      handlePageChange(page as number)
+                                    }
+                                    isActive={currentPage === page}
+                                    className="cursor-pointer"
+                                  >
+                                    {page}
+                                  </PaginationLink>
+                                )}
+                              </PaginationItem>
+                            ))}
+
+                            <PaginationItem>
+                              <PaginationNext
+                                onClick={handleNextPage}
+                                className={
+                                  currentPage === totalPages
+                                    ? "pointer-events-none opacity-50"
+                                    : "cursor-pointer"
+                                }
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
