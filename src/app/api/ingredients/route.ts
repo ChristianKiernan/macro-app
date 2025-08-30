@@ -42,16 +42,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
     const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const requestData = await request.json();
-
-    // Remove userId from request data (if present) and use authenticated user's ID
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { userId, allergens, ...ingredientData } = requestData;
 
     // Ensure servingSize is a number

@@ -42,8 +42,8 @@ export function filterIngredients(
   // Apply dietary restriction filters (for ingredients, filter by allergens)
   if (filters.dietaryRestrictions && filters.dietaryRestrictions.length > 0) {
     filtered = filtered.filter((ingredient) => {
-      // For ingredients, dietary restrictions work by filtering OUT allergens
-      // e.g., "Dairy-Free" means the ingredient should NOT contain "Dairy"
+      // For ingredients, dietary restrictions work by filtering out allergens
+      
       return filters.dietaryRestrictions.every((restriction) => {
         const allergenToAvoid = restriction.replace("-Free", "");
         return !ingredient.allergens?.some((ingredientAllergen) =>

@@ -60,8 +60,8 @@ export interface Ingredient {
   fat?: number | null;
   carbs?: number | null;
   sugar?: number | null;
-  servingSize?: number | null; // Changed from string to number
-  servingUnit?: ServingUnit | null; // Prisma enum values from database
+  servingSize?: number | null;
+  servingUnit?: ServingUnit | null; 
   allergens?: string[] | null;
   userId: string;
   createdAt: string;
@@ -77,7 +77,7 @@ export interface SavePayload {
   fat: number;
   carbs: number;
   sugar: number;
-  servingSize: number; // Changed from string to number to match Prisma Float
+  servingSize: number; 
   servingUnit: ServingUnit;
   allergens: string[];
 }

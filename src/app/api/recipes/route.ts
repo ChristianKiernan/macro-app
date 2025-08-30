@@ -72,7 +72,6 @@ export async function POST(request: NextRequest) {
     const requestData = await request.json();
 
     // Remove userId from request data (if present) and use authenticated user's ID
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { userId, ingredients, allergens, ...recipeData } = requestData;
 
     // Ensure servings is a number
