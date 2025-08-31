@@ -1,11 +1,11 @@
-import { Ingredient } from "./ingredient";
+import { Ingredient, Unit } from "./ingredient";
 
 // Recipe ingredient with quantity and unit
 export interface RecipeIngredient {
   ingredientId: string;
   ingredient?: Ingredient;
   quantity: number;
-  unit: string;
+  unit: Unit;
 }
 
 // Base recipe interface for forms/editing
@@ -38,7 +38,7 @@ export interface RecipeSavePayload {
   ingredients: Array<{
     ingredientId: string;
     quantity: number;
-    unit: string;
+    unit: Unit;
   }>;
   allergens: string[];
 }

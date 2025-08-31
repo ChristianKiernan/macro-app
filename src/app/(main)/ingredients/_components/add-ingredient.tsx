@@ -5,6 +5,7 @@ import { UNIT_MAPPING } from "@/types/ingredient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FractionInput } from "@/components/ui/fraction-input";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -27,7 +28,7 @@ type FormState = {
   fat: string;
   carbs: string;
   sugar: string;
-  servingSize: string;
+  servingSize: number;
   servingUnit: Unit;
   allergens: string[];
 };
@@ -40,7 +41,7 @@ const initialFormState = (): FormState => ({
   fat: "",
   carbs: "",
   sugar: "",
-  servingSize: "",
+  servingSize: 0,
   servingUnit: "g",
   allergens: [],
 });
@@ -104,7 +105,7 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       alert("Please enter an ingredient name");
       return;
     }
-    if (!formData.servingSize.trim() || num(formData.servingSize) <= 0) {
+    if (!formData.servingSize || formData.servingSize <= 0) {
       alert("Please enter a valid serving size");
       return;
     }
@@ -113,7 +114,7 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
       name: formData.name.trim(),
       brand: formData.brand.trim() || undefined,
       servingUnit: UNIT_MAPPING[formData.servingUnit], // Convert UI unit to Prisma enum
-      servingSize: num(formData.servingSize),
+      servingSize: formData.servingSize,
       calories: num(formData.calories),
       protein: num(formData.protein),
       fat: num(formData.fat),
@@ -176,16 +177,14 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="servingSize">Serving Size</Label>
-              <Input
+              <FractionInput
                 id="servingSize"
-                type="number"
                 value={formData.servingSize}
-                onChange={(e) =>
-                  handleInputChange("servingSize", e.target.value)
-                }
+                onChange={(value) => handleInputChange("servingSize", value)}
+                unit={formData.servingUnit}
                 placeholder="100"
-                step="0.1"
                 min="0"
+                step="0.1"
               />
             </div>
             <div className="space-y-2">

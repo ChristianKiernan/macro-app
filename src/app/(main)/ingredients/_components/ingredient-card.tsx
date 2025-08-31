@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { FractionInput } from "@/components/ui/fraction-input";
 import { EntityInfo } from "@/components/ui/entity-info";
 import { MacroNutrients } from "@/components/ui/macro-nutrients";
 import type { Ingredient, Unit } from "@/types/ingredient";
@@ -286,15 +287,13 @@ export default function IngredientCard({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-quantity">Quantity</Label>
-                      <Input
+                      <FractionInput
                         id="edit-quantity"
-                        type="number"
-                        step="0.1"
-                        min="0"
                         value={editingQuantity}
-                        onChange={(e) =>
-                          setEditingQuantity(Number(e.target.value))
-                        }
+                        onChange={setEditingQuantity}
+                        unit={editingUnit}
+                        min="0"
+                        step="0.1"
                       />
                     </div>
                     <div className="space-y-2">
@@ -476,15 +475,13 @@ export default function IngredientCard({
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="swap-quantity">Quantity</Label>
-                          <Input
+                          <FractionInput
                             id="swap-quantity"
-                            type="number"
-                            step="0.1"
-                            min="0"
                             value={newQuantity}
-                            onChange={(e) =>
-                              setNewQuantity(Number(e.target.value))
-                            }
+                            onChange={setNewQuantity}
+                            unit={newUnit}
+                            min="0"
+                            step="0.1"
                           />
                         </div>
                         <div className="space-y-2">

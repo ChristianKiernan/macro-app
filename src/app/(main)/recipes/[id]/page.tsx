@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FractionInput } from "@/components/ui/fraction-input";
 import IngredientCard from "@/app/(main)/ingredients/_components/ingredient-card";
 import { ArrowLeft, Plus, Save } from "lucide-react";
 import {
@@ -13,8 +16,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -924,13 +925,13 @@ function AddIngredientForm({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="add-quantity">Quantity</Label>
-                  <Input
+                  <FractionInput
                     id="add-quantity"
-                    type="number"
-                    step="0.1"
-                    min="0"
                     value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    onChange={setQuantity}
+                    unit={unit}
+                    min="0"
+                    step="0.1"
                   />
                 </div>
                 <div className="space-y-2">

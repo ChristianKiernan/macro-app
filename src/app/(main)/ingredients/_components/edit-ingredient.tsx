@@ -5,6 +5,7 @@ import { UNIT_MAPPING } from "@/types/ingredient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FractionInput } from "@/components/ui/fraction-input";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -31,14 +32,14 @@ type FormState = {
   fat: string;
   carbs: string;
   sugar: string;
-  servingSize: string;
+  servingSize: number;
   servingUnit: Unit;
   allergens: string[];
 };
 
-const parseServing = (raw?: number | null): { amount: string; unit: Unit } => {
-  // For numbers, we just return the number as string and default unit
-  const amount = raw !== null && raw !== undefined ? String(raw) : "";
+const parseServing = (raw?: number | null): { amount: number; unit: Unit } => {
+  // For numbers, we just return the number and default unit
+  const amount = raw !== null && raw !== undefined ? raw : 0;
   const unit: Unit = "g"; // Default unit, will be overridden by actual servingUnit
   return { amount, unit };
 };
@@ -63,7 +64,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       fat: toStr(ingredient?.fat),
       carbs: toStr(ingredient?.carbs),
       sugar: toStr(ingredient?.sugar),
-      servingSize: amount || "",
+      servingSize: amount,
       servingUnit: ingredient?.servingUnit ?? unit ?? "g",
       allergens: ingredient?.allergens ?? [],
     };
@@ -123,7 +124,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       name: formData.name.trim(),
       brand: formData.brand.trim() || undefined,
       servingUnit: UNIT_MAPPING[formData.servingUnit], // Convert UI unit to Prisma enum
-      servingSize: num(formData.servingSize), // Just the number, not concatenated with unit
+      servingSize: formData.servingSize, // Just the number, not concatenated with unit
       calories: num(formData.calories),
       protein: num(formData.protein),
       fat: num(formData.fat),
@@ -184,14 +185,13 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="edit-servingSize">Serving Size</Label>
-              <Input
+              <FractionInput
                 id="edit-servingSize"
-                type="number"
                 value={formData.servingSize}
-                onChange={(e) =>
-                  handleInputChange("servingSize", e.target.value)
-                }
+                onChange={(value) => handleInputChange("servingSize", value)}
+                unit={formData.servingUnit}
                 placeholder="100"
+                min="0"
                 step="0.1"
               />
             </div>

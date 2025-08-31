@@ -3,6 +3,7 @@ import { X, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FractionInput } from "@/components/ui/fraction-input";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -12,7 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import type { RecipeSavePayload, RecipeIngredient } from "@/types/recipe";
-import type { Ingredient } from "@/types/ingredient";
+import type { Ingredient, Unit } from "@/types/ingredient";
+import { PRISMA_TO_UI_MAPPING } from "@/types/ingredient";
 
 export interface AddRecipeModalProps {
   isOpen: boolean;
@@ -35,20 +37,16 @@ const initialFormState = (): FormState => ({
   recipeIngredients: [],
 });
 
-const commonUnits = [
+// Use the same units as the ingredient library for consistency
+const availableUnits: Unit[] = [
   "g",
-  "kg",
   "oz",
   "lb",
   "ml",
-  "l",
   "cup",
-  "fl oz",
-  "tsp",
   "tbsp",
+  "tsp",
   "unit",
-  "piece",
-  "slice",
 ];
 
 export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
@@ -85,13 +83,16 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     );
 
     if (!exists) {
+      // Convert ingredient's serving unit to UI unit for consistency
+      const defaultUnit: Unit = ingredient.servingUnit
+        ? PRISMA_TO_UI_MAPPING[ingredient.servingUnit]
+        : "g";
+
       const newRecipeIngredient: RecipeIngredient = {
         ingredientId: ingredient.id,
         ingredient: ingredient,
         quantity: 1,
-        unit: ingredient.servingUnit
-          ? ingredient.servingUnit.toLowerCase()
-          : "g",
+        unit: defaultUnit,
       };
 
       setFormData((prev) => ({
@@ -113,7 +114,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
     }));
   };
 
-  const updateIngredientUnit = (ingredientId: string, unit: string) => {
+  const updateIngredientUnit = (ingredientId: string, unit: Unit) => {
     setFormData((prev) => ({
       ...prev,
       recipeIngredients: prev.recipeIngredients.map((ri) =>
@@ -312,15 +313,15 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
 
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
+                            <FractionInput
                               value={recipeIngredient.quantity}
-                              onChange={(e) =>
+                              onChange={(value) =>
                                 updateIngredientQuantity(
                                   recipeIngredient.ingredientId,
-                                  parseFloat(e.target.value) || 0
+                                  value
                                 )
                               }
+                              unit={recipeIngredient.unit}
                               className="w-20"
                               min="0"
                               step="0.1"
@@ -342,11 +343,11 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                                   onValueChange={(value) =>
                                     updateIngredientUnit(
                                       recipeIngredient.ingredientId,
-                                      value
+                                      value as Unit
                                     )
                                   }
                                 >
-                                  {commonUnits.map((unit) => (
+                                  {availableUnits.map((unit) => (
                                     <DropdownMenuRadioItem
                                       key={unit}
                                       value={unit}
