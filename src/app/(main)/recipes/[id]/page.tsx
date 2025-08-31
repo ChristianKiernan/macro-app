@@ -25,6 +25,7 @@ import {
 import type { Recipe } from "@/types/recipe";
 import type { Ingredient, Unit } from "@/types/ingredient";
 import { UNIT_MAPPING } from "@/types/ingredient";
+import { calculateRecipeNutrition } from "@/lib/recipe-calculations";
 
 // Unit compatibility groups
 const UNIT_GROUPS = {
@@ -179,54 +180,15 @@ export default function RecipeViewPage() {
     );
   };
 
-  // Calculate total and per-serving macros
+  // Calculate total and per-serving macros using shared utility
   const calculateMacros = () => {
-    if (!recipe) return { total: {}, perServing: {} };
-
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalFat = 0;
-    let totalCarbs = 0;
-    let totalSugar = 0;
-
-    recipe.ingredients.forEach((ri) => {
-      if (ri.ingredient) {
-        const ingredientServingUnit = getIngredientServingUnit(ri.ingredient);
-        const recipeQuantity = ri.quantity || 0;
-        const recipeUnit = (ri.unit as Unit) || "unit";
-
-        // Calculate the conversion multiplier
-        const multiplier = getConversionMultiplier(
-          ingredientServingUnit,
-          recipeQuantity,
-          recipeUnit
-        );
-
-        totalCalories += (ri.ingredient.calories || 0) * multiplier;
-        totalProtein += (ri.ingredient.protein || 0) * multiplier;
-        totalFat += (ri.ingredient.fat || 0) * multiplier;
-        totalCarbs += (ri.ingredient.carbs || 0) * multiplier;
-        totalSugar += (ri.ingredient.sugar || 0) * multiplier;
-      }
-    });
-
-    const servings = recipe.servings || 1;
-    return {
-      total: {
-        calories: Math.round(totalCalories),
-        protein: Math.round(totalProtein),
-        fat: Math.round(totalFat),
-        carbs: Math.round(totalCarbs),
-        sugar: Math.round(totalSugar),
-      },
-      perServing: {
-        calories: Math.round(totalCalories / servings),
-        protein: Math.round(totalProtein / servings),
-        fat: Math.round(totalFat / servings),
-        carbs: Math.round(totalCarbs / servings),
-        sugar: Math.round(totalSugar / servings),
-      },
-    };
+    if (!recipe) {
+      return {
+        total: { calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0 },
+        perServing: { calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0 },
+      };
+    }
+    return calculateRecipeNutrition(recipe);
   };
 
   // Handle recipe basic info updates

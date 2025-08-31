@@ -82,11 +82,7 @@ export async function PUT(
 
     const requestData = await req.json();
     // Remove ingredients and allergens from request data (handle separately)
-    const {
-      ingredients = [],
-      allergens = [],
-      ...updateData
-    } = requestData;
+    const { ingredients = [], allergens = [], ...updateData } = requestData;
 
     // Ensure servings is a number if it exists
     if (typeof updateData.servings === "string") {
@@ -186,7 +182,15 @@ export async function PUT(
       include: {
         ingredients: {
           include: {
-            ingredient: true,
+            ingredient: {
+              include: {
+                allergens: {
+                  include: {
+                    allergen: true,
+                  },
+                },
+              },
+            },
           },
         },
         allergens: {
@@ -202,7 +206,10 @@ export async function PUT(
       ...completeRecipe,
       ingredients:
         completeRecipe?.ingredients.map((ri) => ({
-          ...ri.ingredient,
+          ingredient: {
+            ...ri.ingredient,
+            allergens: ri.ingredient.allergens.map((ia) => ia.allergen.name),
+          },
           quantity: ri.quantity,
           unit: ri.unit,
         })) || [],

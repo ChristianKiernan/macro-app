@@ -16,6 +16,10 @@ import {
   filterRecipes,
   getDietaryRestrictionsFromAllergens,
 } from "@/lib/filters";
+import {
+  calculateRecipeNutrition,
+  calculateRecipeAllergens,
+} from "@/lib/recipe-calculations";
 
 export default function RecipesPage() {
   const router = useRouter();
@@ -110,49 +114,15 @@ export default function RecipesPage() {
     }
   };
 
-  // Helper function to calculate recipe nutrition
-  const calculateRecipeNutrition = (recipe: Recipe) => {
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalFat = 0;
-    let totalCarbs = 0;
-    let totalSugar = 0;
-
-    recipe.ingredients.forEach((ri) => {
-      if (ri.ingredient) {
-        const multiplier = ri.quantity || 0;
-        totalCalories += (ri.ingredient.calories || 0) * multiplier;
-        totalProtein += (ri.ingredient.protein || 0) * multiplier;
-        totalFat += (ri.ingredient.fat || 0) * multiplier;
-        totalCarbs += (ri.ingredient.carbs || 0) * multiplier;
-        totalSugar += (ri.ingredient.sugar || 0) * multiplier;
-      }
-    });
-
-    // Divide by servings to get per-serving values
-    const servings = recipe.servings || 1;
-    return {
-      calories: Math.round(totalCalories / servings),
-      protein: Math.round(totalProtein / servings),
-      fat: Math.round(totalFat / servings),
-      carbs: Math.round(totalCarbs / servings),
-      sugar: Math.round(totalSugar / servings),
-    };
+  // Helper function to calculate recipe nutrition - now using shared utility
+  const getRecipeNutrition = (recipe: Recipe) => {
+    const nutrition = calculateRecipeNutrition(recipe);
+    return nutrition.perServing; // Return per-serving values for the card display
   };
 
-  // Helper function to calculate recipe allergens from ingredients
-  const calculateRecipeAllergens = (recipe: Recipe): string[] => {
-    const allergenSet = new Set<string>();
-
-    recipe.ingredients.forEach((ri) => {
-      if (ri.ingredient?.allergens) {
-        ri.ingredient.allergens.forEach((allergen) => {
-          allergenSet.add(allergen);
-        });
-      }
-    });
-
-    return Array.from(allergenSet).sort();
+  // Helper function to calculate recipe allergens from ingredients - now using shared utility
+  const getRecipeAllergens = (recipe: Recipe): string[] => {
+    return calculateRecipeAllergens(recipe);
   };
 
   // Get available dietary restrictions from ingredients
@@ -351,9 +321,8 @@ export default function RecipesPage() {
                     }`}
                   >
                     {filteredRecipes.map((recipe) => {
-                      const nutrition = calculateRecipeNutrition(recipe);
-                      const calculatedAllergens =
-                        calculateRecipeAllergens(recipe);
+                      const nutrition = getRecipeNutrition(recipe);
+                      const calculatedAllergens = getRecipeAllergens(recipe);
 
                       // Create enhanced recipe with calculated allergens
                       const enhancedRecipe = {

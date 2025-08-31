@@ -322,7 +322,7 @@ export const AddRecipeModal: React.FC<AddRecipeModalProps> = ({
                                 )
                               }
                               unit={recipeIngredient.unit}
-                              className="w-20"
+                              className="w-32"
                               min="0"
                               step="0.1"
                             />
